@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useHistory } from "react-router-dom";
 import {
@@ -9,6 +9,7 @@ import {
 export function EmployeeUpsert() {
   const dispatch = useDispatch();
   const history = useHistory();
+  const formEL = useRef();
   const state = useSelector((state) => state);
   console.log(state);
 
@@ -32,33 +33,41 @@ export function EmployeeUpsert() {
   const addEmployee = (e) => {
     e.preventDefault();
     console.log(firstName, lastName, userName, password, email, mobile);
+    console.log(formEL);
+    console.log(formEL.current.checkValidity());
 
-    // THIS IS REDUX ACTION CALLING
-    dispatch(
-      createEmployeeAction({
-        firstName,
-        lastName,
-        userName,
-        email,
-        password,
-        mobile,
-      })
-    );
+    if (formEL.current.checkValidity() === false) {
+      e.preventDefault();
+      e.stopPropagation();
+      formEL.current.classList.add("was-validated");
+    } else {
+      const re = /^[a-z0-9_\.]+$/;
+      if (!re.test(userName)) {
+        alert("Username Vlidation Fails");
+        return;
+      }
 
-    // A1 sucess
-    setSuccessOperation(true);
-    setTimeout(() => setSuccessOperation(false), 5000);
+      dispatch(
+        createEmployeeAction({
+          firstName,
+          lastName,
+          userName,
+          email,
+          password,
+          mobile,
+        })
+      );
 
-    // A2: navigate to another page
-    // history.push("/list-employee");
+      setSuccessOperation(true);
+      setTimeout(() => setSuccessOperation(false), 5000);
 
-    // reset the form
-    setFirstName("");
-    setLastName("");
-    setUserName("");
-    setPassword("");
-    setEmail("");
-    setMobile("");
+      setFirstName("");
+      setLastName("");
+      setUserName("");
+      setPassword("");
+      setEmail("");
+      setMobile("");
+    }
   };
 
   const updateEmployee = () => {
@@ -74,7 +83,6 @@ export function EmployeeUpsert() {
       })
     );
 
-    // reset the form
     setFirstName("");
     setLastName("");
     setUserName("");
@@ -87,92 +95,116 @@ export function EmployeeUpsert() {
     <div className="row">
       <div className="col-3 col-md-3 d-none d-md-block"></div>
       <div className="col-12 col-md-6">
-        <h3 className="alert alert-secondary">
+        <h3 className="alert alert-success">
           {state.employee.refemp.id ? "Update Employee" : "Create Employee"}
         </h3>
 
         {/** BELOW THESE TWO TAGS MUST BE CONDITIOANL */}
         {successOperation && (
-          <div className="alert alert-success">Opeation Success</div>
+          <div className="alert alert-success">Operation Success</div>
         )}
 
-        <div className="mb-1">
-          <input
-            type="text"
-            value={firstName}
-            onChange={(e) => updateFirstName(e)}
-            className="form-control"
-            placeholder="Enter First name"
-          />
-        </div>
-
-        <div className="mb-1">
-          <input
-            type="text"
-            value={lastName}
-            onChange={(e) => updateLastName(e)}
-            className="form-control"
-            placeholder="Enter Lastname"
-          />
-        </div>
-
-        <div className="mb-1">
-          <input
-            type="text"
-            value={userName}
-            onChange={(e) => updateUserName(e)}
-            className="form-control"
-            placeholder="Enter Username"
-          />
-        </div>
-
-        <div className="mb-1">
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => updatePassword(e)}
-            className="form-control"
-            placeholder="Enter Password"
-          />
-        </div>
-
-        <div className="mb-1">
-          <input
-            type="text"
-            value={email}
-            onChange={(e) => updateEmail(e)}
-            className="form-control"
-            placeholder="Enter Email"
-          />
-        </div>
-
-        <div className="mb-1">
-          <input
-            type="text"
-            value={mobile}
-            onChange={(e) => updateMobile(e)}
-            className="form-control"
-            placeholder="Enter Mobile"
-          />
-        </div>
-
-        <div className="mb-1">
-          {state.employee.refemp.id ? (
+        <form ref={formEL} class="needs-validation" novalidate>
+          <div className="mb-1">
             <input
-              type="button"
-              className="btn btn-secondary w-100"
-              value="Update Employee"
-              onClick={() => updateEmployee()}
+              type="text"
+              value={firstName}
+              onChange={(e) => updateFirstName(e)}
+              className="form-control"
+              placeholder="Enter First name"
+              minLength="4"
+              maxLength="8"
+              title="Enter atleast 4 to 8 characters"
+              required
             />
-          ) : (
+          </div>
+
+          <div className="mb-1">
             <input
-              type="button"
-              className="btn btn-secondary w-100"
-              value="Add Employee"
-              onClick={(e) => addEmployee(e)}
+              type="text"
+              value={lastName}
+              onChange={(e) => updateLastName(e)}
+              className="form-control"
+              placeholder="Enter Lastname"
+              minLength="4"
+              maxLength="8"
+              title="Enter atleast 4 to 8 characters"
+              required
             />
-          )}
-        </div>
+          </div>
+
+          <div className="mb-1">
+            <input
+              type="text"
+              value={userName}
+              onChange={(e) => updateUserName(e)}
+              className="form-control"
+              placeholder="Enter Username"
+              minLength="6"
+              maxLength="8"
+              title="Special characters are not allowed and UserName should  contain 6 characters"
+              required
+            />
+          </div>
+
+          <div className="mb-1">
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => updatePassword(e)}
+              className="form-control"
+              placeholder="Enter Password"
+              minLength="8"
+              maxLength="20"
+              pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}"
+              title="Must contain at least one number and one uppercase and lowercase letter, should hava8 to 20 characters"
+              required
+            />
+          </div>
+
+          <div className="mb-1">
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => updateEmail(e)}
+              className="form-control"
+              placeholder="Enter Email"
+              required
+            />
+          </div>
+
+          <div className="mb-1">
+            <input
+              type="number"
+              value={mobile}
+              onChange={(e) => updateMobile(e)}
+              className="form-control"
+              placeholder="Enter Mobile"
+              max="9999999999"
+              min="1234567890"
+              title="Mobilenumber should contain exactly 10 numbers"
+              required
+            />
+          </div>
+
+          <div className="mb-1">
+            {state.employee.refemp.id ? (
+              <input
+                type="button"
+                className="btn btn-secondary w-100"
+                value="Update Employee"
+                onClick={() => updateEmployee()}
+              />
+            ) : (
+              <input
+                type="button"
+                className="btn btn-secondary w-100"
+                value="Add Employee"
+                onClick={(e) => addEmployee(e)}
+              />
+            )}
+          </div>
+        </form>
       </div>
       <div className="col-3 col-md-3  d-none d-md-block"></div>
     </div>
